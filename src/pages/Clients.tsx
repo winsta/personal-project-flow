@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import { PlusCircle, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,13 @@ import ClientCard, { ClientCardProps } from "@/components/clients/ClientCard";
 import { clients } from "@/utils/sample-data";
 
 const Clients = () => {
-  const [allClients] = useState<ClientCardProps[]>(clients);
+  // Cast the clients data to ensure it matches the ClientCardProps type
+  const [allClients] = useState<ClientCardProps[]>(
+    clients.map(client => ({
+      ...client,
+      status: client.status as "active" | "inactive"
+    }))
+  );
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredClients = allClients.filter((client) => {

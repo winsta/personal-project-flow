@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import { PlusCircle, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,13 @@ import ProjectCard, { ProjectCardProps } from "@/components/dashboard/ProjectCar
 import { projects } from "@/utils/sample-data";
 
 const Projects = () => {
-  const [allProjects] = useState<ProjectCardProps[]>(projects);
+  // Cast the projects data to ensure it matches the ProjectCardProps type
+  const [allProjects] = useState<ProjectCardProps[]>(
+    projects.map(project => ({
+      ...project,
+      status: project.status as "active" | "completed" | "on-hold"
+    }))
+  );
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 

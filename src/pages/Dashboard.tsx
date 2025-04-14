@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import { 
   FolderKanban, 
   CheckCircle2, 
@@ -17,7 +17,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { summaryData, getRecentProjects, getUpcomingTasks } from "@/utils/sample-data";
 
 const Dashboard = () => {
-  const [recentProjects] = useState<ProjectCardProps[]>(getRecentProjects(3));
+  // Cast the return type to ensure it matches the ProjectCardProps type
+  const [recentProjects] = useState<ProjectCardProps[]>(
+    getRecentProjects(3).map(project => ({
+      ...project,
+      status: project.status as "active" | "completed" | "on-hold"
+    }))
+  );
   const [upcomingTasks] = useState<TaskCardProps[]>(getUpcomingTasks(4));
 
   return (

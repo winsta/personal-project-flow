@@ -1,8 +1,8 @@
 
-import { useNavigate, useEffect } from "react";
+import { useNavigate as useRouterNavigate, useEffect } from "react-router-dom";
 
 const Index = () => {
-  const navigate = useNavigate();
+  const navigate = useRouterNavigate();
   
   useEffect(() => {
     navigate("/");
