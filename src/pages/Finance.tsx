@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { 
@@ -246,6 +247,14 @@ const Finance = () => {
     document.body.removeChild(link);
   };
 
+  // Define the refetch function to refresh all finance-related data
+  const refetch = () => {
+    queryClient.invalidateQueries({ queryKey: ["project-finance"] });
+    queryClient.invalidateQueries({ queryKey: ["finance-transactions"] });
+    queryClient.invalidateQueries({ queryKey: ["project-finances"] });
+    toast.success("Data refreshed");
+  };
+
   return (
     <>
       <Helmet>
@@ -399,7 +408,7 @@ const Finance = () => {
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>
-            <Button variant="ghost" size="icon" onClick={() => refetch()} title="Refresh">
+            <Button variant="ghost" size="icon" onClick={refetch} title="Refresh">
               <RefreshCw className="h-4 w-4" />
             </Button>
           </div>
@@ -473,7 +482,7 @@ const Finance = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {isLoading ? (
+                    {transactionsLoading ? (
                       <TableRow>
                         <TableCell colSpan={5} className="text-center py-4">
                           Loading transactions...
@@ -535,7 +544,13 @@ const Finance = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {projectSummaries.length > 0 ? (
+                    {financeLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-4">
+                          Loading project finances...
+                        </TableCell>
+                      </TableRow>
+                    ) : projectSummaries.length > 0 ? (
                       projectSummaries.map((summary) => {
                         const budget = summary.budget || 0;
                         const received = summary.received || 0;
