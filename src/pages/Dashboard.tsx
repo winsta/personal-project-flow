@@ -1,3 +1,4 @@
+
 import { Helmet } from "react-helmet-async";
 import { 
   FolderKanban, 
@@ -16,6 +17,7 @@ import NewProjectDialog from "@/components/projects/NewProjectDialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Project, Task } from "@/types/project";
 
 const Dashboard = () => {
   // Fetch recent projects
@@ -30,7 +32,7 @@ const Dashboard = () => {
       
       if (error) throw error;
       
-      return data || [];
+      return data as Project[] || [];
     },
   });
 
@@ -46,7 +48,7 @@ const Dashboard = () => {
       
       if (error) throw error;
       
-      return data || [];
+      return data as Task[] || [];
     },
   });
 
@@ -165,7 +167,7 @@ const Dashboard = () => {
                     id={project.id}
                     title={project.name}
                     description={project.description || ""}
-                    status={project.status as "planning" | "in_progress" | "on_hold" | "completed" | "cancelled"}
+                    status={project.status}
                     progress={Math.floor(Math.random() * (100 - 10 + 1) + 10)} // Placeholder progress
                     dueDate={project.end_date || undefined}
                   />
@@ -216,8 +218,8 @@ const Dashboard = () => {
                     title={task.title}
                     description={task.description || ""}
                     dueDate={task.due_date ? new Date(task.due_date) : undefined}
-                    status={task.status as "to_do" | "in_progress" | "done" | "blocked"}
-                    priority={task.priority as "low" | "medium" | "high"}
+                    status={task.status}
+                    priority={task.priority}
                   />
                 ))
               ) : (

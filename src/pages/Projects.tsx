@@ -17,10 +17,11 @@ import NewTaskDialog from "@/components/tasks/NewTaskDialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Project, ProjectStatus } from "@/types/project";
 
 const Projects = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | ProjectStatus>("all");
 
   // Fetch projects from Supabase
   const { data: projects = [], isLoading, error } = useQuery({
@@ -33,7 +34,7 @@ const Projects = () => {
       
       if (error) throw error;
       
-      return data || [];
+      return data as Project[] || [];
     },
   });
 
@@ -87,7 +88,7 @@ const Projects = () => {
           <div className="flex gap-2">
             <Select
               value={statusFilter}
-              onValueChange={setStatusFilter}
+              onValueChange={(value) => setStatusFilter(value as "all" | ProjectStatus)}
             >
               <SelectTrigger className="w-[180px] bg-background">
                 <SelectValue placeholder="Filter by status" />
@@ -98,6 +99,7 @@ const Projects = () => {
                 <SelectItem value="in_progress">In Progress</SelectItem>
                 <SelectItem value="on_hold">On Hold</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
             <Button variant="outline" size="icon">

@@ -24,3 +24,45 @@ export const checkTableExists = async (tableName: string): Promise<boolean> => {
     return false;
   }
 };
+
+// Helper function to check if a bucket exists
+export const checkBucketExists = async (bucketName: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase.storage.getBucket(bucketName);
+    return !error && data !== null;
+  } catch (error) {
+    console.error(`Error checking if bucket ${bucketName} exists:`, error);
+    return false;
+  }
+};
+
+// Helper function to ensure a bucket exists, create it if it doesn't
+export const ensureBucketExists = async (bucketName: string, isPublic: boolean = false): Promise<boolean> => {
+  const exists = await checkBucketExists(bucketName);
+  
+  if (!exists) {
+    try {
+      const { error } = await supabase.storage.createBucket(bucketName, {
+        public: isPublic,
+      });
+      
+      if (error) {
+        console.error(`Error creating bucket ${bucketName}:`, error);
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error(`Exception creating bucket ${bucketName}:`, error);
+      return false;
+    }
+  }
+  
+  return true;
+};
+
+// Get current user ID helper
+export const getCurrentUserId = (): string | null => {
+  const session = supabase.auth.getSession();
+  return session ? supabase.auth.getUser().then(({ data }) => data?.user?.id || null) : null;
+};
