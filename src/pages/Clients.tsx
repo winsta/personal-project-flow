@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ClientCard from "@/components/clients/ClientCard";
@@ -31,6 +31,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/context/AuthContext";
 
 // Client form schema
 const clientSchema = z.object({
@@ -47,9 +48,10 @@ const Clients = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   // Fetch clients from Supabase
-  const { data: clients = [], isLoading, error } = useQuery({
+  const { data: clients = [], isLoading, error, refetch } = useQuery({
     queryKey: ["clients"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -82,7 +84,16 @@ const Clients = () => {
 
   const createClient = useMutation({
     mutationFn: async (data: ClientFormValues) => {
-      const { error } = await supabase.from("clients").insert(data);
+      // Ensure name is included and not optional
+      const clientData = {
+        name: data.name,
+        email: data.email,
+        company: data.company || null,
+        phone: data.phone || null,
+        notes: data.notes || null
+      };
+      
+      const { error } = await supabase.from("clients").insert(clientData);
       
       if (error) throw error;
     },
@@ -240,14 +251,19 @@ const Clients = () => {
         </div>
 
         {/* Search Bar */}
-        <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search clients..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-8"
-          />
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search clients..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-8"
+            />
+          </div>
+          <Button variant="outline" size="icon" onClick={() => refetch()} title="Refresh">
+            <RefreshCw className="h-4 w-4" />
+          </Button>
         </div>
 
         {/* Clients Grid */}
@@ -268,7 +284,6 @@ const Clients = () => {
                 email={client.email}
                 company={client.company || ""}
                 status="active"
-                projects={[]} // We'll add this functionality later
               />
             ))
           ) : (

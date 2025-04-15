@@ -12,14 +12,11 @@ import AppLayout from "@/components/layout/AppLayout";
 import Dashboard from "@/pages/Dashboard";
 import Projects from "@/pages/Projects";
 import Clients from "@/pages/Clients";
+import Documents from "@/pages/Documents";
+import Finance from "@/pages/Finance";
+import Snippets from "@/pages/Snippets";
 import Auth from "@/pages/Auth";
 import NotFound from "@/pages/NotFound";
-
-// Placeholder pages - to be implemented later
-const Documents = () => <div className="p-6"><h1 className="text-2xl font-bold">Documents</h1><p>Document management coming soon...</p></div>;
-const Finance = () => <div className="p-6"><h1 className="text-2xl font-bold">Finance</h1><p>Financial tracking coming soon...</p></div>;
-const Snippets = () => <div className="p-6"><h1 className="text-2xl font-bold">Code Snippets</h1><p>Code snippet management coming soon...</p></div>;
-const Settings = () => <div className="p-6"><h1 className="text-2xl font-bold">Settings</h1><p>Settings page coming soon...</p></div>;
 
 const queryClient = new QueryClient();
 
@@ -45,7 +42,7 @@ const App = () => (
                   <Route path="/documents" element={<Documents />} />
                   <Route path="/finance" element={<Finance />} />
                   <Route path="/snippets" element={<Snippets />} />
-                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/settings" element={<div className="p-6"><h1 className="text-2xl font-bold">Settings</h1><p>Settings page coming soon...</p></div>} />
                 </Route>
               </Route>
               <Route path="*" element={<NotFound />} />
