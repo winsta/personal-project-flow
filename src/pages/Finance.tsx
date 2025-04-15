@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, checkTableExists } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -98,25 +98,21 @@ const Finance = () => {
   });
 
   // Fetch project finance data
-  const { data: financeData = [], isLoading: financeLoading, error: financeError } = useQuery({
+  const { data: financeData = [], isLoading: financeLoading, error: financeError, refetch: refetchFinance } = useQuery({
     queryKey: ["project-finance"],
     queryFn: async () => {
       try {
-        // First check if the table exists by attempting to fetch a single row
-        const { data: testData, error: testError } = await supabase
-          .from("project_finance")
-          .select("*")
-          .limit(1);
+        // Check if table exists first
+        const tableExists = await checkTableExists("project_finance");
         
-        // If we get a "relation does not exist" error, the table doesn't exist
-        if (testError && testError.message.includes("relation") && testError.message.includes("does not exist")) {
+        if (!tableExists) {
           console.log("Project finance table doesn't exist yet");
           return [];
         }
         
         // If we reach here, the table exists, so fetch all data
         const { data, error } = await supabase
-          .from("project_finance")
+          .from("project_finance" as any)
           .select("*, projects(name)")
           .order("created_at", { ascending: false });
         
@@ -131,24 +127,21 @@ const Finance = () => {
   });
 
   // Fetch finance transactions
-  const { data: transactions = [], isLoading: transactionsLoading } = useQuery({
+  const { data: transactions = [], isLoading: transactionsLoading, refetch: refetchTransactions } = useQuery({
     queryKey: ["finance-transactions"],
     queryFn: async () => {
       try {
-        // First check if the table exists
-        const { data: testData, error: testError } = await supabase
-          .from("project_finance_transactions")
-          .select("*")
-          .limit(1);
+        // Check if table exists first
+        const tableExists = await checkTableExists("project_finance_transactions");
         
-        if (testError && testError.message.includes("relation") && testError.message.includes("does not exist")) {
+        if (!tableExists) {
           console.log("Finance transactions table doesn't exist yet");
           return [];
         }
         
         // If we reach here, the table exists
         const { data, error } = await supabase
-          .from("project_finance_transactions")
+          .from("project_finance_transactions" as any)
           .select("*, projects(name)")
           .order("created_at", { ascending: false });
         
@@ -163,23 +156,35 @@ const Finance = () => {
   });
 
   // Fetch project finance summaries
-  const { data: projectSummaries = [] } = useQuery({
+  const { data: projectSummaries = [], refetch: refetchSummaries } = useQuery({
     queryKey: ["project-finances"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("project_finance")
-        .select(`*, projects(name)`);
-      
-      if (error) throw error;
-      
-      return data || [];
+      try {
+        // Check if table exists first
+        const tableExists = await checkTableExists("project_finance");
+        
+        if (!tableExists) {
+          return [];
+        }
+        
+        const { data, error } = await supabase
+          .from("project_finance" as any)
+          .select(`*, projects(name)`);
+        
+        if (error) throw error;
+        
+        return data || [];
+      } catch (error) {
+        console.error("Error fetching project summaries:", error);
+        return [];
+      }
     },
   });
 
   const addTransaction = useMutation({
     mutationFn: async (data: FinanceFormValues) => {
       const { error } = await supabase
-        .from("project_finance_transactions")
+        .from("project_finance_transactions" as any)
         .insert({
           project_id: data.project_id,
           type: data.type,
@@ -194,8 +199,7 @@ const Finance = () => {
       form.reset();
       setDialogOpen(false);
       toast.success("Transaction added successfully!");
-      queryClient.invalidateQueries({ queryKey: ["finances"] });
-      queryClient.invalidateQueries({ queryKey: ["project-finances"] });
+      refetch();
     },
     onError: (error: any) => {
       toast.error("Failed to add transaction", {
@@ -249,9 +253,9 @@ const Finance = () => {
 
   // Define the refetch function to refresh all finance-related data
   const refetch = () => {
-    queryClient.invalidateQueries({ queryKey: ["project-finance"] });
-    queryClient.invalidateQueries({ queryKey: ["finance-transactions"] });
-    queryClient.invalidateQueries({ queryKey: ["project-finances"] });
+    refetchFinance();
+    refetchTransactions();
+    refetchSummaries();
     toast.success("Data refreshed");
   };
 

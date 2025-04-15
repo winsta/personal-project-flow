@@ -172,16 +172,25 @@ export default function NewProjectDialog() {
       
       // Create the initial finance record if budget is provided
       if (data.budget && data.budget > 0) {
-        const financeData = {
-          project_id: projectId,
-          budget: data.budget,
-          received: 0,
-          spent: 0
-        };
-      
-        // Here we'll check if the project_finance table exists before inserting
         try {
-          await supabase.from("project_finance").insert(financeData);
+          // First check if the table exists
+          const { count, error: countError } = await supabase
+            .from("project_finance" as any)
+            .select("*", { count: 'exact', head: true });
+          
+          // If the table exists, insert the finance data
+          if (countError === null) {
+            await supabase
+              .from("project_finance" as any)
+              .insert({
+                project_id: projectId,
+                budget: data.budget,
+                received: 0,
+                spent: 0
+              });
+          } else {
+            console.log("project_finance table doesn't exist, skipping finance record creation");
+          }
         } catch (error) {
           console.error("Failed to add finance data", error);
           // We won't throw this error as it's not critical to project creation

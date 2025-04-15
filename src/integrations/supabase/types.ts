@@ -206,6 +206,85 @@ export type Database = {
         }
         Relationships: []
       }
+      project_finance: {
+        Row: {
+          budget: number | null
+          created_at: string | null
+          id: string
+          project_id: string
+          received: number | null
+          spent: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          budget?: number | null
+          created_at?: string | null
+          id?: string
+          project_id: string
+          received?: number | null
+          spent?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          budget?: number | null
+          created_at?: string | null
+          id?: string
+          project_id?: string
+          received?: number | null
+          spent?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_finance_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_finance_transactions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          date: string
+          description: string | null
+          id: string
+          project_id: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          date: string
+          description?: string | null
+          id?: string
+          project_id: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          date?: string
+          description?: string | null
+          id?: string
+          project_id?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_finance_transactions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           client_id: string | null
@@ -425,7 +504,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       project_status:

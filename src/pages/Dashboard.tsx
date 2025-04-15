@@ -1,4 +1,3 @@
-
 import { Helmet } from "react-helmet-async";
 import { 
   FolderKanban, 
@@ -166,8 +165,7 @@ const Dashboard = () => {
                     id={project.id}
                     title={project.name}
                     description={project.description || ""}
-                    client={project.clients?.name || ""}
-                    status="active" // Map the status from project.status to the expected status values
+                    status={project.status as "planning" | "in_progress" | "on_hold" | "completed" | "cancelled"}
                     progress={Math.floor(Math.random() * (100 - 10 + 1) + 10)} // Placeholder progress
                     dueDate={project.end_date || undefined}
                   />
@@ -218,9 +216,8 @@ const Dashboard = () => {
                     title={task.title}
                     description={task.description || ""}
                     dueDate={task.due_date ? new Date(task.due_date) : undefined}
-                    project={task.projects?.name || ""}
-                    status="todo" // Convert task.status to the expected status enum
-                    priority="medium" // Add appropriate default for priority
+                    status={task.status as "to_do" | "in_progress" | "done" | "blocked"}
+                    priority={task.priority as "low" | "medium" | "high"}
                   />
                 ))
               ) : (

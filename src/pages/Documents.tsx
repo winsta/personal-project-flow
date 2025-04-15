@@ -114,27 +114,43 @@ const Documents = () => {
 
       const fileExt = selectedFile.name.split('.').pop();
       const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `documents/${fileName}`;
+      const filePath = `${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('documents')
-        .upload(filePath, selectedFile);
+      try {
+        const { data: bucketList, error: bucketError } = await supabase.storage
+          .listBuckets();
+        
+        if (bucketError) throw bucketError;
+        
+        const bucketExists = bucketList.some(bucket => bucket.name === 'documents');
+        
+        if (!bucketExists) {
+          throw new Error("Documents bucket not found. Please check your storage configuration.");
+        }
+        
+        const { error: uploadError } = await supabase.storage
+          .from('documents')
+          .upload(filePath, selectedFile);
 
-      if (uploadError) throw uploadError;
+        if (uploadError) throw uploadError;
 
-      const { error: docError } = await supabase
-        .from("documents")
-        .insert({
-          name: data.name,
-          file_path: filePath,
-          file_type: selectedFile.type,
-          file_size: selectedFile.size,
-          uploaded_by: user.id,
-          project_id: data.project_id || null,
-          task_id: data.task_id || null,
-        });
+        const { error: docError } = await supabase
+          .from("documents")
+          .insert({
+            name: data.name,
+            file_path: `documents/${filePath}`,
+            file_type: selectedFile.type,
+            file_size: selectedFile.size,
+            uploaded_by: user.id,
+            project_id: data.project_id || null,
+            task_id: data.task_id || null,
+          });
 
-      if (docError) throw docError;
+        if (docError) throw docError;
+      } catch (error) {
+        console.error("Error uploading document:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       form.reset();
