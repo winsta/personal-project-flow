@@ -1,57 +1,49 @@
+import React, { useState } from "react";
+import { Search, Menu, Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
 
-import React from "react";
-import { Bell, User, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import Sidebar from "./Sidebar";
+import TopNavAuth from "./TopNavAuth";
 
 const TopNav = () => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { setTheme } = useTheme();
+
   return (
-    <header className="border-b border-border bg-background px-4 py-3 flex items-center justify-between">
-      <div className="flex items-center w-full max-w-md">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
+      <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+        <SheetTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="p-0 md:hidden"
+            aria-label="Toggle Menu"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="p-0">
+          <Sidebar isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
+        </SheetContent>
+      </Sheet>
+      
+      <div className="w-full flex justify-between items-center gap-4">
+        <div className="hidden md:block">
+          <Search className="h-4 w-4 text-muted-foreground" />
+        </div>
+        <div className="relative hidden md:flex">
           <Input
             type="search"
             placeholder="Search..."
-            className="w-full bg-background pl-8 focus-visible:ring-primary"
+            className="sm:w-[300px] md:w-[200px] lg:w-[300px] pl-8"
           />
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         </div>
-      </div>
-      
-      <div className="flex items-center space-x-3">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative"
-          title="Notifications"
-        >
-          <Bell className="h-5 w-5" />
-          <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive"></span>
-        </Button>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <User className="h-5 w-5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Logout</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        
+        <TopNavAuth />
       </div>
     </header>
   );

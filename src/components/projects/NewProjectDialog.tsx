@@ -32,43 +32,74 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { clients } from "@/utils/sample-data";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 
 // Project form schema
 const projectSchema = z.object({
-  title: z.string().min(2, "Title must be at least 2 characters"),
+  name: z.string().min(2, "Title must be at least 2 characters"),
   description: z.string().min(5, "Description must be at least 5 characters"),
-  clientId: z.string().min(1, "Please select a client"),
-  status: z.enum(["active", "on-hold", "completed"]),
+  client_id: z.string().optional(),
+  status: z.enum(["planning", "in_progress", "completed", "on_hold"]),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
 
 export default function NewProjectDialog() {
   const [open, setOpen] = useState(false);
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  // Fetch clients for the select dropdown
+  const { data: clients = [] } = useQuery({
+    queryKey: ["clients"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("clients").select("*");
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema),
     defaultValues: {
-      title: "",
+      name: "",
       description: "",
-      clientId: "",
-      status: "active",
+      client_id: undefined,
+      status: "planning",
+    },
+  });
+
+  const createProject = useMutation({
+    mutationFn: async (data: ProjectFormValues) => {
+      const { error } = await supabase.from("projects").insert({
+        ...data,
+        created_by: user?.id,
+      });
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      // Reset form and close dialog
+      form.reset();
+      setOpen(false);
+      
+      // Show success message
+      toast.success("Project created successfully!");
+      
+      // Refresh projects data
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+    },
+    onError: (error: any) => {
+      toast.error("Failed to create project", {
+        description: error.message,
+      });
     },
   });
 
   function onSubmit(data: ProjectFormValues) {
-    // In a real app, this would send the data to an API
-    console.log("New project data:", data);
-
-    // Show success message
-    toast.success("Project created successfully!", {
-      description: `${data.title} has been added to your projects.`,
-    });
-
-    // Reset form and close dialog
-    form.reset();
-    setOpen(false);
+    createProject.mutate(data);
   }
 
   return (
@@ -91,7 +122,7 @@ export default function NewProjectDialog() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="title"
+              name="name"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Project Title</FormLabel>
@@ -123,7 +154,7 @@ export default function NewProjectDialog() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="clientId"
+                name="client_id"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Client</FormLabel>
@@ -164,8 +195,9 @@ export default function NewProjectDialog() {
                           <SelectValue placeholder="Select status" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="active">Active</SelectItem>
-                          <SelectItem value="on-hold">On Hold</SelectItem>
+                          <SelectItem value="planning">Planning</SelectItem>
+                          <SelectItem value="in_progress">In Progress</SelectItem>
+                          <SelectItem value="on_hold">On Hold</SelectItem>
                           <SelectItem value="completed">Completed</SelectItem>
                         </SelectContent>
                       </Select>
@@ -177,7 +209,12 @@ export default function NewProjectDialog() {
             </div>
 
             <DialogFooter>
-              <Button type="submit">Create Project</Button>
+              <Button 
+                type="submit" 
+                disabled={createProject.isPending}
+              >
+                {createProject.isPending ? "Creating..." : "Create Project"}
+              </Button>
             </DialogFooter>
           </form>
         </Form>

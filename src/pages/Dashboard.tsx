@@ -1,34 +1,102 @@
 
-import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { 
   FolderKanban, 
   CheckCircle2, 
-  Clock, 
   Users, 
-  DollarSign, 
-  FileText,
-  Plus
+  DollarSign
 } from "lucide-react";
 import StatCard from "@/components/dashboard/StatCard";
-import ProjectCard, { ProjectCardProps } from "@/components/dashboard/ProjectCard";
-import TaskCard, { TaskCardProps } from "@/components/tasks/TaskCard";
+import ProjectCard from "@/components/dashboard/ProjectCard";
+import TaskCard from "@/components/tasks/TaskCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { summaryData, getRecentProjects, getUpcomingTasks } from "@/utils/sample-data";
 import NewTaskDialog from "@/components/tasks/NewTaskDialog";
 import NewProjectDialog from "@/components/projects/NewProjectDialog";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Dashboard = () => {
-  // Cast the return type to ensure it matches the ProjectCardProps type
-  const [recentProjects] = useState<ProjectCardProps[]>(
-    getRecentProjects(3).map(project => ({
-      ...project,
-      status: project.status as "active" | "completed" | "on-hold"
-    }))
-  );
-  const [upcomingTasks] = useState<TaskCardProps[]>(getUpcomingTasks(4));
+  // Fetch recent projects
+  const { data: recentProjects = [], isLoading: projectsLoading } = useQuery({
+    queryKey: ["projects", "recent"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*, clients(name)")
+        .order("created_at", { ascending: false })
+        .limit(3);
+      
+      if (error) throw error;
+      
+      return data || [];
+    },
+  });
+
+  // Fetch upcoming tasks
+  const { data: upcomingTasks = [], isLoading: tasksLoading } = useQuery({
+    queryKey: ["tasks", "upcoming"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("*, projects(name)")
+        .order("due_date", { ascending: true })
+        .limit(4);
+      
+      if (error) throw error;
+      
+      return data || [];
+    },
+  });
+
+  // Fetch summary data
+  const { data: summaryData } = useQuery({
+    queryKey: ["dashboard", "summary"],
+    queryFn: async () => {
+      // Projects count
+      const { data: projectsCount, error: projectsError } = await supabase
+        .from("projects")
+        .select("id", { count: "exact", head: true });
+      
+      if (projectsError) throw projectsError;
+
+      // Active clients count
+      const { data: clientsCount, error: clientsError } = await supabase
+        .from("clients")
+        .select("id", { count: "exact", head: true });
+      
+      if (clientsError) throw clientsError;
+
+      // Tasks count
+      const { data: tasksData, error: tasksError } = await supabase
+        .from("tasks")
+        .select("status");
+      
+      if (tasksError) throw tasksError;
+      
+      const completedTasks = tasksData.filter(task => task.status === "completed").length;
+      const totalTasks = tasksData.length;
+
+      return {
+        activeProjects: projectsCount?.count || 0,
+        activeClients: clientsCount?.count || 0,
+        completedTasks,
+        totalTasks,
+        revenueThisMonth: 0, // Placeholder for now
+        pendingInvoices: 0,   // Placeholder for now
+      };
+    },
+    initialData: {
+      activeProjects: 0,
+      activeClients: 0,
+      completedTasks: 0,
+      totalTasks: 0,
+      revenueThisMonth: 0,
+      pendingInvoices: 0,
+    },
+  });
 
   return (
     <>
@@ -84,9 +152,34 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {recentProjects.map((project) => (
-                <ProjectCard key={project.id} {...project} />
-              ))}
+              {projectsLoading ? (
+                Array.from({ length: 3 }).map((_, index) => (
+                  <div 
+                    key={`project-skeleton-${index}`} 
+                    className="h-[220px] rounded-lg border border-border bg-card p-6 animate-pulse"
+                  />
+                ))
+              ) : recentProjects.length > 0 ? (
+                recentProjects.map((project) => (
+                  <ProjectCard 
+                    key={project.id}
+                    id={project.id}
+                    title={project.name}
+                    description={project.description || ""}
+                    client={project.clients?.name || ""}
+                    status={project.status}
+                    progress={Math.floor(Math.random() * (100 - 10 + 1) + 10)} // Placeholder progress
+                    dueDate={project.end_date || undefined}
+                  />
+                ))
+              ) : (
+                <div className="col-span-full text-center py-8">
+                  <h3 className="text-lg font-medium">No projects found</h3>
+                  <p className="text-muted-foreground">
+                    Create your first project to get started.
+                  </p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -110,9 +203,34 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {upcomingTasks.map((task) => (
-                <TaskCard key={task.id} {...task} />
-              ))}
+              {tasksLoading ? (
+                Array.from({ length: 4 }).map((_, index) => (
+                  <div 
+                    key={`task-skeleton-${index}`} 
+                    className="h-[180px] rounded-lg border border-border bg-card p-6 animate-pulse"
+                  />
+                ))
+              ) : upcomingTasks.length > 0 ? (
+                upcomingTasks.map((task) => (
+                  <TaskCard 
+                    key={task.id}
+                    id={task.id}
+                    title={task.title}
+                    description={task.description || ""}
+                    priority={task.priority}
+                    status={task.status}
+                    dueDate={task.due_date || undefined}
+                    project={task.projects?.name || ""}
+                  />
+                ))
+              ) : (
+                <div className="col-span-full text-center py-8">
+                  <h3 className="text-lg font-medium">No tasks found</h3>
+                  <p className="text-muted-foreground">
+                    Create your first task to get started.
+                  </p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

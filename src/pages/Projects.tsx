@@ -11,26 +11,46 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import ProjectCard, { ProjectCardProps } from "@/components/dashboard/ProjectCard";
-import { projects } from "@/utils/sample-data";
+import ProjectCard from "@/components/dashboard/ProjectCard";
 import NewProjectDialog from "@/components/projects/NewProjectDialog";
 import NewTaskDialog from "@/components/tasks/NewTaskDialog";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Projects = () => {
-  // Cast the projects data to ensure it matches the ProjectCardProps type
-  const [allProjects] = useState<ProjectCardProps[]>(
-    projects.map(project => ({
-      ...project,
-      status: project.status as "active" | "completed" | "on-hold"
-    }))
-  );
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const filteredProjects = allProjects.filter((project) => {
-    const matchesSearch = project.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          project.description.toLowerCase().includes(searchTerm.toLowerCase());
+  // Fetch projects from Supabase
+  const { data: projects = [], isLoading, error } = useQuery({
+    queryKey: ["projects"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*, clients(name)")
+        .order("created_at", { ascending: false });
+      
+      if (error) throw error;
+      
+      return data || [];
+    },
+  });
+
+  if (error) {
+    toast.error("Failed to load projects", {
+      description: (error as Error).message,
+    });
+  }
+
+  // Filter projects based on search term and status
+  const filteredProjects = projects.filter((project) => {
+    const matchesSearch = 
+      project.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      (project.description && project.description.toLowerCase().includes(searchTerm.toLowerCase()));
+    
     const matchesStatus = statusFilter === "all" || project.status === statusFilter;
+    
     return matchesSearch && matchesStatus;
   });
 
@@ -74,9 +94,10 @@ const Projects = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="planning">Planning</SelectItem>
+                <SelectItem value="in_progress">In Progress</SelectItem>
+                <SelectItem value="on_hold">On Hold</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="on-hold">On Hold</SelectItem>
               </SelectContent>
             </Select>
             <Button variant="outline" size="icon">
@@ -87,11 +108,27 @@ const Projects = () => {
 
         {/* Projects Grid */}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredProjects.map((project) => (
-            <ProjectCard key={project.id} {...project} />
-          ))}
-          
-          {filteredProjects.length === 0 && (
+          {isLoading ? (
+            Array.from({ length: 6 }).map((_, index) => (
+              <div 
+                key={`skeleton-${index}`} 
+                className="h-[220px] rounded-lg border border-border bg-card p-6 animate-pulse"
+              />
+            ))
+          ) : filteredProjects.length > 0 ? (
+            filteredProjects.map((project) => (
+              <ProjectCard 
+                key={project.id} 
+                id={project.id}
+                title={project.name}
+                description={project.description || ""}
+                client={project.clients?.name || ""}
+                status={project.status}
+                progress={Math.floor(Math.random() * (100 - 10 + 1) + 10)} // Placeholder progress for now
+                dueDate={project.end_date || undefined}
+              />
+            ))
+          ) : (
             <div className="col-span-full text-center py-8">
               <h3 className="text-lg font-medium">No projects found</h3>
               <p className="text-muted-foreground">
