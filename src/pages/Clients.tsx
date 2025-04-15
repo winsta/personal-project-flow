@@ -1,11 +1,12 @@
 
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { PlusCircle, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ClientCard, { ClientCardProps } from "@/components/clients/ClientCard";
 import { clients } from "@/utils/sample-data";
+import NewProjectDialog from "@/components/projects/NewProjectDialog";
 
 const Clients = () => {
   // Cast the clients data to ensure it matches the ClientCardProps type
@@ -39,10 +40,13 @@ const Clients = () => {
               Manage your client information and associated projects.
             </p>
           </div>
-          <Button className="sm:w-auto w-full">
-            <PlusCircle className="h-4 w-4 mr-2" />
-            Add Client
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button className="sm:w-auto w-full">
+              <Search className="h-4 w-4 mr-2" />
+              Add Client
+            </Button>
+            <NewProjectDialog />
+          </div>
         </div>
 
         {/* Search Bar */}

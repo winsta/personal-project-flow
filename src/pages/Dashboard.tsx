@@ -7,14 +7,18 @@ import {
   Clock, 
   Users, 
   DollarSign, 
-  FileText 
+  FileText,
+  Plus
 } from "lucide-react";
 import StatCard from "@/components/dashboard/StatCard";
 import ProjectCard, { ProjectCardProps } from "@/components/dashboard/ProjectCard";
 import TaskCard, { TaskCardProps } from "@/components/tasks/TaskCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { summaryData, getRecentProjects, getUpcomingTasks } from "@/utils/sample-data";
+import NewTaskDialog from "@/components/tasks/NewTaskDialog";
+import NewProjectDialog from "@/components/projects/NewProjectDialog";
 
 const Dashboard = () => {
   // Cast the return type to ensure it matches the ProjectCardProps type
@@ -33,12 +37,16 @@ const Dashboard = () => {
       </Helmet>
 
       <div className="space-y-6">
-        <div>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Your project management overview and recent activities.
-          </p>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <NewProjectDialog />
+            <NewTaskDialog className="sm:w-auto w-full" />
+          </div>
         </div>
+        <p className="text-muted-foreground">
+          Your project management overview and recent activities.
+        </p>
 
         {/* Stats Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -68,8 +76,11 @@ const Dashboard = () => {
 
         {/* Recent Projects */}
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader className="pb-2 flex flex-row items-center justify-between">
             <CardTitle className="text-xl">Recent Projects</CardTitle>
+            <Button variant="ghost" size="sm" asChild>
+              <a href="/projects">View all</a>
+            </Button>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -85,13 +96,16 @@ const Dashboard = () => {
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-xl">Upcoming Tasks</CardTitle>
-              <Tabs defaultValue="all" className="w-[300px]">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="all">All</TabsTrigger>
-                  <TabsTrigger value="today">Today</TabsTrigger>
-                  <TabsTrigger value="overdue">Overdue</TabsTrigger>
-                </TabsList>
-              </Tabs>
+              <div className="flex items-center gap-2">
+                <NewTaskDialog className="ml-2" />
+                <Tabs defaultValue="all" className="w-[300px]">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="all">All</TabsTrigger>
+                    <TabsTrigger value="today">Today</TabsTrigger>
+                    <TabsTrigger value="overdue">Overdue</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
             </div>
           </CardHeader>
           <CardContent>

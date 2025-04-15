@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { PlusCircle, Filter } from "lucide-react";
+import { Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/select";
 import ProjectCard, { ProjectCardProps } from "@/components/dashboard/ProjectCard";
 import { projects } from "@/utils/sample-data";
+import NewProjectDialog from "@/components/projects/NewProjectDialog";
+import NewTaskDialog from "@/components/tasks/NewTaskDialog";
 
 const Projects = () => {
   // Cast the projects data to ensure it matches the ProjectCardProps type
@@ -46,10 +48,10 @@ const Projects = () => {
               Manage all your active and completed projects.
             </p>
           </div>
-          <Button className="sm:w-auto w-full">
-            <PlusCircle className="h-4 w-4 mr-2" />
-            Add Project
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <NewProjectDialog />
+            <NewTaskDialog className="sm:w-auto w-full" />
+          </div>
         </div>
 
         {/* Filters */}
