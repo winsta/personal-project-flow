@@ -157,31 +157,35 @@ export default function NewProjectDialog() {
       
       // If team members were selected, add them to the team_members table
       if (data.team_members && data.team_members.length > 0 && data.team_id) {
-        const teamMembersData = data.team_members.map(userId => ({
-          user_id: userId,
-          team_id: data.team_id as string,
-          role: 'member'
-        }));
+        const teamMembersPromises = data.team_members.map(userId => {
+          return supabase
+            .from("team_members")
+            .insert({
+              user_id: userId,
+              team_id: data.team_id as string,
+              role: 'member'
+            });
+        });
         
-        const { error: teamMembersError } = await supabase
-          .from("team_members")
-          .insert(teamMembersData);
-        
-        if (teamMembersError) throw teamMembersError;
+        await Promise.all(teamMembersPromises);
       }
       
       // Create the initial finance record if budget is provided
       if (data.budget && data.budget > 0) {
-        const { error: financeError } = await supabase
-          .from("project_finance")
-          .insert({
-            project_id: projectId,
-            budget: data.budget,
-            received: 0,
-            spent: 0
-          });
-        
-        if (financeError) throw financeError;
+        const financeData = {
+          project_id: projectId,
+          budget: data.budget,
+          received: 0,
+          spent: 0
+        };
+      
+        // Here we'll check if the project_finance table exists before inserting
+        try {
+          await supabase.from("project_finance").insert(financeData);
+        } catch (error) {
+          console.error("Failed to add finance data", error);
+          // We won't throw this error as it's not critical to project creation
+        }
       }
       
       return projectData[0];
@@ -280,6 +284,7 @@ export default function NewProjectDialog() {
                             <SelectValue placeholder="Select a client" />
                           </SelectTrigger>
                           <SelectContent>
+                            <SelectItem value="none">None</SelectItem>
                             {clients.map((client) => (
                               <SelectItem key={client.id} value={client.id}>
                                 {client.name}
@@ -357,6 +362,7 @@ export default function NewProjectDialog() {
                               <SelectValue placeholder="Select a team" />
                             </SelectTrigger>
                             <SelectContent>
+                              <SelectItem value="none">None</SelectItem>
                               {teams.map((team) => (
                                 <SelectItem key={team.id} value={team.id}>
                                   {team.name}

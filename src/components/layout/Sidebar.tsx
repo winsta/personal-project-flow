@@ -1,81 +1,118 @@
 
 import React from "react";
-import { NavLink } from "react-router-dom";
-import { 
-  LayoutDashboard, 
-  FolderKanban, 
-  Users, 
-  FileText, 
-  Receipt, 
+import { Link, useLocation } from "react-router-dom";
+import {
+  BarChart2,
+  FileText,
+  FolderKanban,
+  Home,
+  Users,
+  Code2,
   Settings,
-  Code,
-  PanelLeft
+  DollarSign,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/context/AuthContext";
 
-const Sidebar = () => {
-  const isMobile = useIsMobile();
-  const [collapsed, setCollapsed] = React.useState(isMobile);
+interface SidebarProps {
+  isMobileMenuOpen?: boolean;
+  setIsMobileMenuOpen?: React.Dispatch<React.SetStateAction<boolean>>;
+}
 
-  React.useEffect(() => {
-    setCollapsed(isMobile);
-  }, [isMobile]);
+const Sidebar: React.FC<SidebarProps> = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
+  const { pathname } = useLocation();
+  const { signOut } = useAuth();
+  
+  const routes = [
+    {
+      href: "/",
+      icon: Home,
+      label: "Dashboard",
+    },
+    {
+      href: "/projects",
+      icon: FolderKanban,
+      label: "Projects",
+    },
+    {
+      href: "/clients",
+      icon: Users,
+      label: "Clients",
+    },
+    {
+      href: "/documents",
+      icon: FileText,
+      label: "Documents",
+    },
+    {
+      href: "/finance",
+      icon: DollarSign,
+      label: "Finance",
+    },
+    {
+      href: "/snippets",
+      icon: Code2,
+      label: "Snippets",
+    },
+    {
+      href: "/settings",
+      icon: Settings,
+      label: "Settings",
+    },
+  ];
 
-  const NavItem = ({ to, icon: Icon, label }: { to: string; icon: React.ElementType; label: string }) => (
-    <NavLink
-      to={to}
-      className={({ isActive }) =>
-        cn(
-          "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
-          "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-          isActive
-            ? "bg-sidebar-accent text-sidebar-accent-foreground"
-            : "text-sidebar-foreground/80"
-        )
-      }
-    >
-      <Icon size={20} />
-      {!collapsed && <span>{label}</span>}
-    </NavLink>
-  );
+  const handleItemClick = () => {
+    if (setIsMobileMenuOpen) {
+      setIsMobileMenuOpen(false);
+    }
+  };
 
   return (
-    <aside 
-      className={cn(
-        "flex flex-col bg-sidebar-background text-sidebar-foreground border-r border-sidebar-border",
-        collapsed ? "w-16" : "w-64"
-      )}
-    >
-      <div className="p-4 flex items-center justify-between">
-        {!collapsed && (
-          <h1 className="text-xl font-bold text-sidebar-foreground">ProjectFlow</h1>
-        )}
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className={cn(
-            "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-            collapsed && "mx-auto"
-          )}
-          onClick={() => setCollapsed(!collapsed)}
-        >
-          <PanelLeft size={20} />
-        </Button>
-      </div>
-      
-      <nav className="flex-1 px-2 py-4 space-y-1">
-        <NavItem to="/" icon={LayoutDashboard} label="Dashboard" />
-        <NavItem to="/projects" icon={FolderKanban} label="Projects" />
-        <NavItem to="/clients" icon={Users} label="Clients" />
-        <NavItem to="/documents" icon={FileText} label="Documents" />
-        <NavItem to="/finance" icon={Receipt} label="Finance" />
-        <NavItem to="/snippets" icon={Code} label="Code Snippets" />
-      </nav>
-
-      <div className="p-4">
-        <NavItem to="/settings" icon={Settings} label="Settings" />
+    <aside className="h-screen bg-background z-20 flex-col fixed inset-y-0 left-0 w-64 hidden md:flex border-r">
+      <div className="flex flex-col h-full">
+        <div className="flex h-14 items-center px-4 py-4 border-b">
+          <Link
+            to="/"
+            className="flex items-center gap-2 font-semibold"
+            onClick={handleItemClick}
+          >
+            <BarChart2 className="h-6 w-6" />
+            <span className="text-xl font-bold">ProjectFlow</span>
+          </Link>
+        </div>
+        <div className="flex-1 overflow-auto py-2 px-4">
+          <nav className="grid items-start gap-2">
+            {routes.map((route) => (
+              <Link
+                key={route.href}
+                to={route.href}
+                onClick={handleItemClick}
+              >
+                <Button
+                  variant={pathname === route.href ? "secondary" : "ghost"}
+                  className={cn("w-full justify-start", {
+                    "bg-primary/5": pathname === route.href,
+                  })}
+                >
+                  <route.icon className="h-5 w-5 mr-3" />
+                  {route.label}
+                </Button>
+              </Link>
+            ))}
+          </nav>
+        </div>
+        <div className="p-4 border-t">
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-red-500 hover:text-red-500 hover:bg-red-50"
+            onClick={signOut}
+          >
+            <LogOut className="h-5 w-5 mr-3" />
+            Logout
+          </Button>
+        </div>
       </div>
     </aside>
   );

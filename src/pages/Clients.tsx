@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Search, Plus, RefreshCw } from "lucide-react";
@@ -284,6 +283,7 @@ const Clients = () => {
                 email={client.email}
                 company={client.company || ""}
                 status="active"
+                projectsCount={0}
               />
             ))
           ) : (

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { 
@@ -97,18 +96,68 @@ const Finance = () => {
     },
   });
 
-  // Fetch financial data
-  const { data: transactions = [], isLoading, error, refetch } = useQuery({
-    queryKey: ["finances"],
+  // Fetch project finance data
+  const { data: financeData = [], isLoading: financeLoading, error: financeError } = useQuery({
+    queryKey: ["project-finance"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("project_finance_transactions")
-        .select(`*, projects(name)`)
-        .order("date", { ascending: false });
-      
-      if (error) throw error;
-      
-      return data || [];
+      try {
+        // First check if the table exists by attempting to fetch a single row
+        const { data: testData, error: testError } = await supabase
+          .from("project_finance")
+          .select("*")
+          .limit(1);
+        
+        // If we get a "relation does not exist" error, the table doesn't exist
+        if (testError && testError.message.includes("relation") && testError.message.includes("does not exist")) {
+          console.log("Project finance table doesn't exist yet");
+          return [];
+        }
+        
+        // If we reach here, the table exists, so fetch all data
+        const { data, error } = await supabase
+          .from("project_finance")
+          .select("*, projects(name)")
+          .order("created_at", { ascending: false });
+        
+        if (error) throw error;
+        
+        return data || [];
+      } catch (error) {
+        console.error("Error fetching finance data:", error);
+        return [];
+      }
+    },
+  });
+
+  // Fetch finance transactions
+  const { data: transactions = [], isLoading: transactionsLoading } = useQuery({
+    queryKey: ["finance-transactions"],
+    queryFn: async () => {
+      try {
+        // First check if the table exists
+        const { data: testData, error: testError } = await supabase
+          .from("project_finance_transactions")
+          .select("*")
+          .limit(1);
+        
+        if (testError && testError.message.includes("relation") && testError.message.includes("does not exist")) {
+          console.log("Finance transactions table doesn't exist yet");
+          return [];
+        }
+        
+        // If we reach here, the table exists
+        const { data, error } = await supabase
+          .from("project_finance_transactions")
+          .select("*, projects(name)")
+          .order("created_at", { ascending: false });
+        
+        if (error) throw error;
+        
+        return data || [];
+      } catch (error) {
+        console.error("Error fetching transactions:", error);
+        return [];
+      }
     },
   });
 

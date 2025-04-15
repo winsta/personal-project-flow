@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { FileText, Plus, Search, Upload, X, RefreshCw } from "lucide-react";
@@ -67,7 +66,6 @@ const Documents = () => {
     },
   });
 
-  // Fetch documents from Supabase
   const { data: documents = [], isLoading, error, refetch } = useQuery({
     queryKey: ["documents"],
     queryFn: async () => {
@@ -82,7 +80,6 @@ const Documents = () => {
     },
   });
 
-  // Fetch projects for the select dropdown
   const { data: projects = [] } = useQuery({
     queryKey: ["projects"],
     queryFn: async () => {
@@ -96,7 +93,6 @@ const Documents = () => {
     },
   });
 
-  // Fetch tasks for the select dropdown
   const { data: tasks = [] } = useQuery({
     queryKey: ["tasks"],
     queryFn: async () => {
@@ -116,7 +112,6 @@ const Documents = () => {
         throw new Error("User must be logged in and a file must be selected");
       }
 
-      // First upload the file to Supabase Storage
       const fileExt = selectedFile.name.split('.').pop();
       const fileName = `${Date.now()}.${fileExt}`;
       const filePath = `documents/${fileName}`;
@@ -127,7 +122,6 @@ const Documents = () => {
 
       if (uploadError) throw uploadError;
 
-      // Then save the document metadata to the database
       const { error: docError } = await supabase
         .from("documents")
         .insert({
@@ -161,7 +155,6 @@ const Documents = () => {
       const file = e.target.files[0];
       setSelectedFile(file);
       
-      // Auto-fill the name field with the file name if it's empty
       if (!form.getValues("name")) {
         const fileName = file.name.split('.')[0];
         form.setValue("name", fileName);
@@ -192,14 +185,12 @@ const Documents = () => {
       const docToDelete = documents.find(doc => doc.id === id);
       if (!docToDelete) throw new Error("Document not found");
 
-      // First delete the file from storage
       const { error: storageError } = await supabase.storage
         .from('documents')
         .remove([docToDelete.file_path]);
 
       if (storageError) throw storageError;
 
-      // Then delete the document record
       const { error: dbError } = await supabase
         .from("documents")
         .delete()
@@ -311,7 +302,7 @@ const Documents = () => {
                       name="project_id"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Project</FormLabel>
+                          <FormLabel>Project (Optional)</FormLabel>
                           <Select
                             onValueChange={field.onChange}
                             defaultValue={field.value}
@@ -322,7 +313,7 @@ const Documents = () => {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="">None</SelectItem>
+                              <SelectItem value="none">None</SelectItem>
                               {projects.map((project) => (
                                 <SelectItem key={project.id} value={project.id}>
                                   {project.name}
@@ -340,7 +331,7 @@ const Documents = () => {
                       name="task_id"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Task</FormLabel>
+                          <FormLabel>Task (Optional)</FormLabel>
                           <Select
                             onValueChange={field.onChange}
                             defaultValue={field.value}
@@ -351,7 +342,7 @@ const Documents = () => {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="">None</SelectItem>
+                              <SelectItem value="none">None</SelectItem>
                               {tasks.map((task) => (
                                 <SelectItem key={task.id} value={task.id}>
                                   {task.title}
@@ -379,7 +370,6 @@ const Documents = () => {
           </Dialog>
         </div>
 
-        {/* Search Bar */}
         <div className="flex gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -395,7 +385,6 @@ const Documents = () => {
           </Button>
         </div>
 
-        {/* Documents Grid */}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {isLoading ? (
             Array.from({ length: 6 }).map((_, index) => (

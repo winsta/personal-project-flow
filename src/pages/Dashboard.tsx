@@ -56,16 +56,16 @@ const Dashboard = () => {
     queryKey: ["dashboard", "summary"],
     queryFn: async () => {
       // Projects count
-      const { data: projectsCount, error: projectsError } = await supabase
+      const { count: projectsCount, error: projectsError } = await supabase
         .from("projects")
-        .select("id", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true });
       
       if (projectsError) throw projectsError;
 
       // Active clients count
-      const { data: clientsCount, error: clientsError } = await supabase
+      const { count: clientsCount, error: clientsError } = await supabase
         .from("clients")
-        .select("id", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true });
       
       if (clientsError) throw clientsError;
 
@@ -76,12 +76,12 @@ const Dashboard = () => {
       
       if (tasksError) throw tasksError;
       
-      const completedTasks = tasksData.filter(task => task.status === "completed").length;
+      const completedTasks = tasksData.filter(task => task.status === "done").length;
       const totalTasks = tasksData.length;
 
       return {
-        activeProjects: projectsCount?.count || 0,
-        activeClients: clientsCount?.count || 0,
+        activeProjects: projectsCount || 0,
+        activeClients: clientsCount || 0,
         completedTasks,
         totalTasks,
         revenueThisMonth: 0, // Placeholder for now
@@ -167,7 +167,7 @@ const Dashboard = () => {
                     title={project.name}
                     description={project.description || ""}
                     client={project.clients?.name || ""}
-                    status={project.status}
+                    status="active" // Map the status from project.status to the expected status values
                     progress={Math.floor(Math.random() * (100 - 10 + 1) + 10)} // Placeholder progress
                     dueDate={project.end_date || undefined}
                   />
@@ -217,17 +217,17 @@ const Dashboard = () => {
                     id={task.id}
                     title={task.title}
                     description={task.description || ""}
-                    priority={task.priority}
-                    status={task.status}
-                    dueDate={task.due_date || undefined}
+                    dueDate={task.due_date ? new Date(task.due_date) : undefined}
                     project={task.projects?.name || ""}
+                    status="todo" // Convert task.status to the expected status enum
+                    priority="medium" // Add appropriate default for priority
                   />
                 ))
               ) : (
                 <div className="col-span-full text-center py-8">
                   <h3 className="text-lg font-medium">No tasks found</h3>
                   <p className="text-muted-foreground">
-                    Create your first task to get started.
+                    Add your first task to get started.
                   </p>
                 </div>
               )}

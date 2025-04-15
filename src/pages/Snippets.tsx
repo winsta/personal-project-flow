@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Code, Copy, Pencil, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
@@ -366,7 +365,7 @@ const Snippets = () => {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="">None</SelectItem>
+                                <SelectItem value="none">None</SelectItem>
                                 {projects.map((project) => (
                                   <SelectItem key={project.id} value={project.id}>
                                     {project.name}
@@ -396,7 +395,7 @@ const Snippets = () => {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="">None</SelectItem>
+                              <SelectItem value="none">None</SelectItem>
                               {tasks.map((task) => (
                                 <SelectItem key={task.id} value={task.id}>
                                   {task.title}
@@ -517,7 +516,7 @@ const Snippets = () => {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="">None</SelectItem>
+                            <SelectItem value="none">None</SelectItem>
                             {projects.map((project) => (
                               <SelectItem key={project.id} value={project.id}>
                                 {project.name}
